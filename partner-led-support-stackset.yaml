@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation StackSet to deploy Partner-Led Support Role across AWS Organization'
+
+Resources:
+  PartnerLedSupportStackSet:
+    Type: AWS::CloudFormation::StackSet
+    Properties:
+      PermissionModel: SERVICE_MANAGED
+      StackSetName: PartnerLedSupportRole
+      Description: Deploys Partner-Led Support Role to all accounts in Organization
+      TemplateURL: 'https://github.com/frattallone/aws-samples-partner-led-support/blob/main/partner-led-support-role.yaml'
+      Parameters:
+        - ParameterKey: PartnerAccountId
+          ParameterValue: !Ref PartnerAccountId
+        - ParameterKey: RoleName
+          ParameterValue: !Ref RoleName
+      Capabilities:
+        - CAPABILITY_IAM
+        - CAPABILITY_NAMED_IAM
+      AutoDeployment:
+        Enabled: true
+        RetainStacksOnAccountRemoval: false
+      OperationPreferences:
+        FailureTolerancePercentage: 20
+        MaxConcurrentPercentage: 100
+      ManagedExecution:
+        Active: true
+      StackInstancesGroup:
+        - DeploymentTargets:
+            OrganizationalUnitIds:
+              - !Ref OrganizationalUnitIds
+          Regions:
+            - us-east-1
+
+Parameters:
+  OrganizationalUnitIds:
+    Type: String
+    Description: The organization root ID or organizational unit (OU) IDs.
+    AllowedPattern: '^(ou-[a-z0-9]{4,32}-[a-z0-9]{8,32}|r-[a-z0-9]{4,32})$'
+  PartnerAccountId:
+    Type: String
+    Description: AWS Management Account ID of the partner
+    AllowedPattern: '^[0-9]{12}$'
+  RoleName:
+    Type: String
+    Default: Partner_Led_Support
+    Description: Name of the IAM role to be created
+
+Outputs:
+  StackSetId:
+    Description: ID of the created StackSet
+    Value: !Ref PartnerLedSupportStackSet
