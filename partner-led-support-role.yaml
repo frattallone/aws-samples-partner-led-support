@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template to deploy Partner_Led_Support IAM Role across AWS Organizations'
+
+Parameters:
+  PartnerAccountId:
+    Type: String
+    Description: AWS Management Account ID of the partner
+    AllowedPattern: '^[0-9]{12}$'
+  RoleName:
+    Type: String
+    Default: Partner_Led_Support
+    Description: Name of the IAM role to be created
+
+Resources:
+  PartnerLedSupportRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Ref RoleName
+      Description: Role for Partner-Led Support access
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${PartnerAccountId}:root'
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AWSPartnerLedSupportReadOnlyAccess'
+      Path: '/'
+      Tags:
+        - Key: Purpose
+          Value: PartnerLedSupport
+
+Outputs:
+  RoleArn:
+    Description: ARN of the created IAM role
+    Value: !GetAtt PartnerLedSupportRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-RoleArn'
